@@ -11,6 +11,27 @@
         <p class="flash" th:if="${message != null}" th:text="${message}">登録しました</p>
         <h1 class="page-title">一覧</h1>
         <a class="btn" href="/todos/new">新規登録</a>
+        <form class="search-bar" th:action="@{/todos}" method="get">
+            <div>
+                <label for="keyword">やることの名前</label><br>
+                <input class="form-input" type="text" id="keyword" name="keyword" th:value="${keyword}">
+            </div>
+            <div>
+                <label for="category">ジャンル</label><br>
+                <select class="form-input" id="category" name="category">
+                    <option value="" th:selected="${category == ''}">すべて</option>
+                    <option value="デザイン" th:selected="${category == 'デザイン'}">デザイン</option>
+                    <option value="マーケティング" th:selected="${category == 'マーケティング'}">マーケティング</option>
+                    <option value="プログラミング" th:selected="${category == 'プログラミング'}">プログラミング</option>
+                    <option value="資格" th:selected="${category == '資格'}">資格</option>
+                    <option value="就職活動" th:selected="${category == '就職活動'}">就職活動</option>
+                </select>
+            </div>
+            <input type="hidden" name="order" th:value="${order}">
+            <button class="btn" type="submit">絞り込む</button>
+            <a class="link" th:href="@{/todos(keyword=${keyword},category=${category},order='asc')}">期限が近い順</a>
+            <a class="link" th:href="@{/todos(keyword=${keyword},category=${category},order='desc')}">期限が遠い順</a>
+        </form>
         <p th:if="${#lists.isEmpty(todos)}">まだ1件も登録されていません</p>
         <table class="todo-table" th:unless="${#lists.isEmpty(todos)}">
             <thead>
@@ -30,7 +51,7 @@
                     <td th:text="${todo.priority == 1 ? '高' : (todo.priority == 2 ? '中' : (todo.priority == 3 ? '低' : ''))}">優先度</td>
                     <td th:text="${todo.dueDate}">期限</td>
                     <td th:text="${todo.completed ? '完了' : '未完了'}">状態</td>
-                    <td><a class="link" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a></td>
+                    <td><a class="link" th:href="@{/todos/{id}/edit(id=${todo.id})}">編集</a> <a class="link" th:href="@{/todos/{id}/delete(id=${todo.id})}">削除</a></td>
                 </tr>
             </tbody>
         </table>

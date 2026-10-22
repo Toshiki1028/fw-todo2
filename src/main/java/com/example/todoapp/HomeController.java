@@ -1,11 +1,14 @@
 package com.example.todoapp;
 
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -24,8 +27,14 @@ public class HomeController {
     }
 
     @GetMapping("/todos")
-    public String todos(Model model) {
-        model.addAttribute("todos", todoMapper.findAll());
+    public String todos(@RequestParam(name = "keyword", defaultValue = "") String keyword,
+            @RequestParam(name = "category", defaultValue = "") String category,
+            @RequestParam(name = "order", defaultValue = "asc") String order, Model model) {
+        String sortOrder = "desc".equals(order) ? "desc" : "asc";
+        model.addAttribute("todos", todoMapper.search(keyword, category, sortOrder));
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("category", category);
+        model.addAttribute("order", sortOrder);
         return "todos";
     }
 
@@ -36,7 +45,10 @@ public class HomeController {
     }
 
     @PostMapping("/todos/confirm")
-    public String confirmTodo(@ModelAttribute("todo") Todo todo) {
+    public String confirmTodo(@Valid @ModelAttribute("todo") Todo todo, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "create";
+        }
         return "create-confirm";
     }
 
@@ -65,8 +77,12 @@ public class HomeController {
     }
 
     @PostMapping("/todos/{id}/confirm")
-    public String confirmEdit(@PathVariable("id") Long id, @ModelAttribute("todo") Todo todo, Model model) {
+    public String confirmEdit(@PathVariable("id") Long id, @Valid @ModelAttribute("todo") Todo todo,
+            BindingResult bindingResult, Model model) {
         model.addAttribute("id", id);
+        if (bindingResult.hasErrors()) {
+            return "edit";
+        }
         return "edit-confirm";
     }
 
@@ -82,6 +98,24 @@ public class HomeController {
         todo.setId(id);
         todoMapper.update(todo);
         redirectAttributes.addFlashAttribute("message", "保存しました");
+        return "redirect:/todos";
+    }
+
+    @GetMapping("/todos/{id}/delete")
+    public String confirmDelete(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttributes) {
+        Todo todo = todoMapper.findById(id);
+        if (todo == null) {
+            redirectAttributes.addFlashAttribute("message", "見つかりませんでした");
+            return "redirect:/todos";
+        }
+        model.addAttribute("todo", todo);
+        return "delete";
+    }
+
+    @PostMapping("/todos/{id}/delete")
+    public String deleteTodo(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        todoMapper.deleteById(id);
+        redirectAttributes.addFlashAttribute("message", "削除しました");
         return "redirect:/todos";
     }
 }
